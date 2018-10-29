@@ -1,5 +1,6 @@
 //searcher 负责两个工作:1,解析dict文件
 //						2,搜索有无某字符串
+//之后假如效率不够的话 可以按照字符串长度增设不同的dict
 #pragma once
 #include<string>
 #include<locale>
