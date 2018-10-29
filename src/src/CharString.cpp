@@ -9,15 +9,23 @@ CharString::CharString(const std::wstring & str)
 	maxSize_ = len;//假如concat操作频繁,可能要给maxSize扩容
 	charData_ = new wchar_t[maxSize_];
 	int i = 0;
-	while (str[i] != '\0') {
+	for (int i = 0; i < len; i++) {
 		charData_[i] = str[i];
-		i++;
 	}
 }
 
-CharString::CharString(const wchar_t str[])
+CharString::CharString(const wchar_t str[]):CharString((std::wstring)(str))
 {
-	CharString((std::wstring)(str));
+}
+
+CharString::CharString(CharString * p_str)
+{
+	maxSize_ = p_str->maxSize_;
+	size_ = p_str->size_;
+	charData_ = new wchar_t[maxSize_];
+	for (int i = 0; i < size_; i++) {
+		charData_[i] = p_str->charAt(i);
+	}
 }
 
 
@@ -91,7 +99,7 @@ CharString* CharString::subString(int begin, int end)
 {
 	if (begin >= end || begin < 0 || end > size_)
 		return NULL;
-	CharString* new_str = new CharString();
+	CharString* new_str = new CharString(L"");
 	int new_size = end - begin;
 	new_str->resize(new_size);
 	for (int i = 0; i < new_size; i++)
@@ -173,4 +181,17 @@ const wchar_t & CharString::charAt(int index) const
 wchar_t & CharString::charAt(int index)
 {
 	return charData_[index];// TODO: 在此处插入 return 语句
+}
+
+bool CharString::equal(CharString * rstr)
+{
+	if(rstr->size() != size_)
+		return false;
+	else {
+		for (int i = 0; i < size_; i++) {
+			if (rstr->charAt(i) != charData_[i])
+				return false;
+		}
+		return true;
+	}
 }

@@ -5,6 +5,7 @@
 #include "Stack.h"
 #include "CharString.h"
 #include "CharStringLink.h"
+#include "HashDict.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -23,6 +24,8 @@ void testStack() {
 }
 
 void testString() {
+	wstring aaa(L"AAA");
+	CharString a(aaa);
 	CharString str(L"1123333333333333333333333333333333333333");
 	CharString str_1(L"13");
 	str_1[1] = L'2';
@@ -33,6 +36,15 @@ void testString() {
 
 
 	cout << s->indexOf(str_1);
+}
+
+void testDict(HashDict & dic) {
+ 	CharString* s = new CharString(L"一来二去");
+	cout << dic.search(s) << endl;
+	CharString* s1 = new CharString(L"红魔乡");
+	cout << dic.search(s1) << endl;
+	dic.add(s1);
+	cout << dic.search(s1) << endl;
 }
 
 void testFile() {
@@ -63,7 +75,7 @@ void testFile() {
 	string str;
 	ifstream in;
 	in.imbue(loc);
-	in.open("../词库/词库.dic");
+	in.open("../dictionary/词库.dic");
 	in >> str;
 	wstring wstr;
 	wstr = conv.from_bytes(str);
@@ -74,26 +86,32 @@ void testFile() {
 	CharString s(wstr);
 
 	ofstream os;
-	wstring buf = L"../词库/词目";
+	wstring buf = L"../dictionary/词目";
 	buf += first;
 	buf += L".dic";
 	os.imbue(loc);
 	os.open(buf);
-	
+	HashDict dict(6763);//291143 比较接近字典数目的大小
 	do {
 		wstr = conv.from_bytes(str);
-		os << str << endl;
+		//os << str << endl;
 		CharString s(wstr);
+		dict.add(&s);
 		//list->add(str);
 	} while (in >> str);
+
+	testDict(dict);
 
 	wcout << buf << endl;
 	wcout << first;
 }
+
+
 int main() {
 	//testStack();
-	//testString();
+	testString();
 	testFile();
+
 
 	return 0;
 }

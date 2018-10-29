@@ -7,6 +7,7 @@ class CharString
 	int maxSize_;
 	int size_;
 	wchar_t* charData_;
+	friend class CharString;
 public:
 	//查找子串位置
 	int indexOf(const CharString &);
@@ -26,10 +27,14 @@ public:
 	wchar_t & operator [](int index);
 	const wchar_t & charAt(int index) const;
 	wchar_t & charAt(int index);
-	
-	CharString():charData_(NULL),size_(0),maxSize_(0){}
+	//比较函数
+	bool equal (CharString * rstr);
+	//
+
+	//CharString():charData_(NULL),size_(0),maxSize_(0){}
 	CharString(const std::wstring &);
 	CharString(const wchar_t[]);
+	CharString(CharString *);
 	~CharString();
 public:
 	const static int UNMATCH = -1;//这种初始化可能不适合c++ 11 以下的版本
