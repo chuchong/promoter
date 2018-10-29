@@ -1,0 +1,36 @@
+#pragma once
+#include "CharString.h"
+struct CharStringNode {
+	CharStringNode *next;
+	CharStringNode *prior;
+	CharString *str;
+	CharStringNode() {
+		prior = next = NULL;
+		str = NULL;
+	}
+	~CharStringNode() {
+		delete str;
+	}
+};
+//存储String 的链表 ,暂时用来存储
+class CharStringLink
+{
+	CharStringNode * head;
+	CharStringNode * end;
+	//链表的删除某节点的方法,考虑采用iterator方式遍历
+	void remove(CharStringNode * str_ptr);
+public:
+	//添加一个节点于最后
+	bool isEmpty() {
+		return head == NULL;
+	}
+
+	void add(const std::wstring & str);
+	//删除位于第n个的str
+	void deleteAt(int index);
+	//查找是否存在,若不存在,返回-1
+	int search(const CharString & str);
+	CharStringLink();
+	~CharStringLink();
+};
+

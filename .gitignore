@@ -1,5 +1,11 @@
-!*.cpp
-!*.h
-!*.dict
-!*.md
-!*.html
+/src/*
+!/src/src/
+!/src/src/*.h
+*.pdb
+*.idb
+*.vcxproj
+*.filters
+*.user
+*.obj
+/src/src/Debug
+!/src/dictionary/
