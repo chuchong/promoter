@@ -10,7 +10,7 @@ class CharString
 	friend class CharString;
 public:
 	//查找子串位置
-	int indexOf(const CharString &);
+	int indexOf(const CharString &, int start);
 	//截取子串 左闭右开
 	CharString* subString(int begin, int end);
 	//连接子串

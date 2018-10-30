@@ -35,7 +35,7 @@ CharString::~CharString()
 		delete charData_;
 }
 
-int CharString::indexOf(const CharString & son_str)
+int CharString::indexOf(const CharString & son_str, int start)
 {
 	
 	//kmp算法
@@ -64,7 +64,7 @@ int CharString::indexOf(const CharString & son_str)
 
 	//to find index
 	int start_son = 0;//指向子串
-	int start_father = 0;//指向父串
+	int start_father = start;//指向父串
 
 	int j_of_son = start_son;
 	int j_of_father = start_father;
