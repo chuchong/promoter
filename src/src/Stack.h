@@ -1,6 +1,6 @@
 #pragma once
 #include <assert.h>
-//模板类,注意栈中元素外部不可修改
+//模板类,注意栈中元素为指针时外部需要delete
 template<class T>
 class Stack;
 
@@ -12,6 +12,8 @@ private:
 	Stack_Element(const T & t):t_(t),next_(0){
 	}
 	friend class Stack<T>;
+	~Stack_Element() {
+	}
 };
 
 template<class T>

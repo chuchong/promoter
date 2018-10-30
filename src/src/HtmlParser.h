@@ -10,7 +10,10 @@
 #include "CharString.h"
 #define HtmlNodeEnd 0
 #define HtmlNodeNew 1
-#define HtmlNodeNoMoreString 2
+#define HtmlParseNoMoreString 2
+#define HtmlNodeNotEnd 3
+#define HtmlAttributeEnd 4
+//4 指<> 5 指<.. />
 //html 标签类,即是<p width="1" 中width="1"部分
 
 #define pStack Stack<HtmlNode*>*
@@ -19,10 +22,12 @@ class HtmlAttribute {
 private:
 	CharString * name_ = nullptr;//存储名称
 	CharString * value_ = nullptr;//存储值
-	
 public:
-	int parseDeep(CharString * str, int& index, pStack pstack) {
+	int parseDeep(CharString * str, int& index) {
+		if (index > str->size())
+			return HtmlParseNoMoreString;
 	}
+
 	HtmlAttribute *prior_ = nullptr;
 	HtmlAttribute *next_ = nullptr;
 	bool match(CharString * name, CharString * value) {
@@ -39,12 +44,54 @@ class HtmlNode {
 	CharString * name_ = nullptr;//存储自身名字
 	CharString * text_ = nullptr;//存储所有文字
 								//TODO:如果要生成html对应语法树的话,需要将text部分作为一个单独的Node子类型
+	bool hasLeft = 0;//指示是否已经读取完了左半部分
 public:
-	virtual int parseDeep(CharString * str, int& index, pStack pstack) {//index指向分析开始的位置//返回值分为0 结束, 1 新的节点 2 文本读尽
+	virtual int parseAttribute(CharString * str, int& index) {//结束返回位置为最后一个attribute后面的非空字符 
+		HtmlAttribute *p, *q;
+		head_ = p = q = new HtmlAttribute();
+		int result = head_->parseDeep(str, index);
+		if (result == HtmlParseNoMoreString)
+			return HtmlParseNoMoreString;
+		if (result == HtmlAttributeEnd) {
+			delete head_;
+			head_ = nullptr;
+			return HtmlAttributeEnd;
+		}
 
+		do {
+			p = new HtmlAttribute();
+			result = p->parseDeep(str, index);
+			if (result == HtmlParseNoMoreString)
+				return HtmlParseNoMoreString;
+			if (result == HtmlAttributeEnd) {
+				delete p;
+				return HtmlAttributeEnd;
+			}
+			else {
+				q->next_ = p;
+				p->prior_ = q;
+				q = q->next_;
+			}
+		} while (1);
 	}
-	virtual bool isName(CharString * name) { return name->equal(name_); }
-	virtual bool haveAttribute(CharString * name, CharString * value);
+
+	virtual int parseDeep(CharString * str, int& index, pStack pstack) {//index指向分析开始的位置//返回值分为0 结束, 1 新的节点 2 文本读尽
+		if (index > str->size())
+			return HtmlParseNoMoreString;
+		if (hasLeft == 0) {
+			int first_blank = str->indexOf(L"", index);
+			name_ = str->subString(index, first_blank);
+			int result = parseAttribute(str, index);
+			if (result == HtmlParseNoMoreString)
+				return HtmlParseNoMoreString;
+			if (result == HtmlAttributeEnd) {
+
+			}
+		}
+	}
+
+	virtual bool isName(const CharString * name) { return name_->equal(name); }
+	virtual bool haveAttribute(const CharString * name,const CharString * value);
 	//返回复制自身text_的深度复制引用变量 
 	virtual CharString * deepCopyOfText();
 	~HtmlNode() {
@@ -92,8 +139,20 @@ public:
 class HtmlParser
 {
 private:
+	CharString * endText_ = nullptr;
+private:
 	void extractInfo(HtmlNode * node){
-		if()
+		static const CharString type_div(L"div");
+		static const CharString attribute_name_id (L"id");
+		static const CharString attribute_value_endText(L"endText");
+		if (dynamic_cast<HtmlMeta *>(node) != nullptr) {
+			//TODO meta是将信息藏在了attribute中,找一种方法提取出来
+		}
+		else {
+			if (node->isName(&type_div) && node->haveAttribute(&attribute_name_id, &attribute_value_endText)) {
+				endText_ = new CharString(node->deepCopyOfText());
+			}
+		}
 	}
 	HtmlNode* createHtmlNode(CharString * str, int& index){
 	/*依照前面的 分为<meta 
@@ -108,20 +167,31 @@ private:
 		static const CharString comment(L"<!--");
 		static const CharString declaration(L"<!");
 		static const CharString element(L"<");
+		//移动index 位置
+		static const int meta_len = 5;
+		static const int script_len = 7;
+		static const int comment_len = 4;
+		static const int declaration_len = 2;
+		static const int element_len = 1;
 
 		if (str->indexOf(meta, index) == 0) {
+			index += meta_len;
 			return new HtmlMeta();
 		}
 		else if (str->indexOf(script, index) == 0) {
+			index += script_len;
 			return new HtmlScript();
 		}
 		else if (str->indexOf(comment, index) == 0) {
+			index += comment_len;
 			return new HtmlComment();
 		}
 		else if (str->indexOf(declaration, index) == 0) {
+			index += declaration_len;
 			return new HtmlDeclaration();
 		}
 		else if (str->charAt(0) == L'<') {
+			index += element_len;
 			return new HtmlNode();
 		}
 
@@ -161,18 +231,18 @@ public:
 				case HtmlNodeNew:
 					HtmlNode *newNode = createHtmlNode(&s, index);
 					stack->push(newNode);
-				case HtmlNodeNoMoreString:
+				case HtmlParseNoMoreString:
 				default:
 					break;
 				}
-			} while (state != HtmlNodeNoMoreString);
+			} while (state != HtmlParseNoMoreString);
 		}
 	}
 	HtmlParser() {
 
 	}
 	~HtmlParser() {
-
+		delete endText_;
 	}
 };
 

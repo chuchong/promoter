@@ -119,7 +119,7 @@ public:
 	~HashDict() {
 		for (int i = 0; i < mod_; i++)
 			delete map_[i];
-		delete map_;
+		delete[] map_;
 	}
 };
 

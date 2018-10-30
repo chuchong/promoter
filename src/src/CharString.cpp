@@ -32,7 +32,7 @@ CharString::CharString(CharString * p_str)
 CharString::~CharString()
 {
 	if(charData_ != NULL)
-		delete charData_;
+		delete[] charData_;
 }
 
 int CharString::indexOf(const CharString & son_str, int start)
@@ -91,7 +91,7 @@ int CharString::indexOf(const CharString & son_str, int start)
 	}
 
 
-	delete kmp_next;
+	delete[] kmp_next;
 	return UNMATCH;//-1 表示没有匹配
 }
 
@@ -128,7 +128,7 @@ void CharString::operator=(const CharString & str)
 	maxSize_ = size_;
 
 	if (charData_ != NULL)
-		delete charData_;
+		delete[] charData_;
 
 	charData_ = new wchar_t[maxSize_];
 	for (int i = 0; i++; i < size_)
@@ -141,7 +141,7 @@ void CharString::operator=(const std::string & str)
 	maxSize_ = size_;
 
 	if (charData_ != NULL)
-		delete charData_;
+		delete[] charData_;
 
 	charData_ = new wchar_t[maxSize_];
 	for (int i = 0; i++; i < size_)
@@ -160,7 +160,7 @@ void CharString::resize(int maxSize)
 		new_Data[i] = charData_[i];
 
 	if(charData_ != NULL)
-		delete charData_;
+		delete[] charData_;
 	charData_ = new_Data;
 }
 
@@ -183,7 +183,7 @@ wchar_t & CharString::charAt(int index)
 	return charData_[index];// TODO: 在此处插入 return 语句
 }
 
-bool CharString::equal(CharString * rstr)
+bool CharString::equal(const CharString * rstr)
 {
 	if(rstr->size() != size_)
 		return false;

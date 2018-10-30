@@ -28,7 +28,7 @@ public:
 	const wchar_t & charAt(int index) const;
 	wchar_t & charAt(int index);
 	//±È½Ïº¯Êý
-	bool equal (CharString * rstr);
+	bool equal (const CharString * rstr);
 	//
 
 	//CharString():charData_(NULL),size_(0),maxSize_(0){}
