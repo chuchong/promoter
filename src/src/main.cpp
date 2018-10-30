@@ -7,6 +7,7 @@
 #include "CharStringLink.h"
 #include "HashDict.h"
 #include "Searcher.h"
+#include "HtmlParser.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -49,11 +50,16 @@ void testDict() {
 
 }
 
+void testParser() {
+	HtmlParser parser;
+	parser.parse(L"../input/0.html");
+}
+
 int main() {
 	//testStack();
 	testString();
 	testDict();
-
+	testParser();
 
 	return 0;
 }
