@@ -30,24 +30,39 @@ public:
 			if (index >= str->size())
 				return HtmlParseNoMoreString;
 			
-			if (str->charAt(index) == L'/' || str->charAt(index) == L'>' || str->charAt(index) == L'-') 
-				return HtmlAttributeEnd;
-
 			if (str->charAt(index) != L' ') {
 				if (str->charAt(index) == L'/' || str->charAt(index) == L'>' || str->charAt(index) == L'-') {
 					return HtmlAttributeEnd;
 				}
 				else {
 					int nameIndex = str->indexOf(L"=", index);
+					assert(nameIndex != -1);
 					name_ = str->subString(index, nameIndex);
-					index = nameIndex;
+					index = nameIndex + 1;
 					//认为值都是在""中
-					int leftIndex = str->indexOf(L"\"", index) + 1;
-					index = leftIndex;
-					int rightIndex = str->indexOf(L"\"", index);
-					index = rightIndex + 1;
-					value_ = str->subString(leftIndex, rightIndex);
-
+					//三种情况 "" '' 没有
+					if (str->charAt(index) == L'\'') {
+						index++;
+						while (str->charAt(index) != L'\'') {
+							index++;
+						}
+						value_ = str->subString(nameIndex + 2, index);
+						index++;
+					}
+					else if (str->charAt(index) == L'\"') {
+						index++;
+						while (str->charAt(index) != L'\"') {
+							index++;
+						}
+						value_ = str->subString(nameIndex + 2, index);
+						index++;
+					}
+					else {
+						while (str->charAt(index) != L' ') {
+							index++;
+						}
+						value_ = str->subString(nameIndex + 1, index);
+					}
 					return HtmlNodeNotEnd;
 				}
 			}
@@ -172,7 +187,7 @@ public:
 				index = nextIndex;
 				//TODO: +1有些暴躁就是了
 				if (str->charAt(index + 1) == L'/') {
-					index += name_->size() + 2;
+					index += name_->size() + 3; // </name>
 					return HtmlNodeEnd;
 				}
 				else
@@ -220,7 +235,11 @@ public:
 	~HtmlNode() {
 		delete name_;
 		delete text_;
-
+		while (head_ != nullptr) {
+			HtmlAttribute *attri = head_;
+			head_ = head_->next_;
+			delete attri;
+		}
 	}
 };
 ////div 中才存有正文部分所以有需要可以专门给他设立一个,而其他部分就可以忽略text了,但为了可能的工作需要,暂不写这个
@@ -233,10 +252,48 @@ public:
 
 //因为javascript代码中会出现干扰的< > 符号,所以需要单独抽取出
 class HtmlScript: public HtmlNode {
+public:
+	HtmlScript() {
+		name_ = new CharString(L"script");
+	}
+	virtual int parseDeep(CharString * str, int& index, pStack pstack) override {
+		if (index >= str->size())
+			return HtmlParseNoMoreString;
 
+		if (hasLeft == 0) {
+			int result = parseAttribute(str, index);
+			if (result == HtmlParseNoMoreString)
+				return HtmlParseNoMoreString;
+
+			if (result == HtmlAttributeEnd) {
+				//这里只考虑/> 和 >情况 ,特殊用法会在特殊子类中进行修改
+				while (1) {
+					if (index >= str->size())
+						return HtmlParseNoMoreString;
+
+					if (str->charAt(index) == L'>') {
+						hasLeft = true;
+						index++;
+						return HtmlNodeNotEnd;
+					}
+					index++;
+				}
+			}
+		}
+		else {
+			int nextIndex = str->indexOf(L"</script>", index);
+			if (nextIndex == -1)
+				return HtmlParseNoMoreString;
+			else {
+				index = nextIndex + 9;//</script>长9
+				return HtmlNodeEnd;
+			}
+		}
+	}
 };
 //注释部分也需要单独处理
 class HtmlComment: public HtmlNode{
+public:
 	virtual int parseDeep(CharString * str, int& index, pStack stack) override {
 		int next = str->indexOf(L"-->", index);
 		if(next == -1)
@@ -287,15 +344,51 @@ class HtmlMeta : public HtmlNode {
 		}
 	}
 };
+//还有哪些类似htmllink不需要结束符号的都一起拿来弄了
+class HtmlLinkLike: public HtmlNode {
+public:
+	HtmlLinkLike() {
+		name_ = new CharString(L"");//没名字,不影响
+	}
+
+	virtual int parseDeep(CharString * str, int& index, pStack pstack) override {
+		if (index >= str->size())
+			return HtmlParseNoMoreString;
+
+		int result = parseAttribute(str, index);
+		if (result == HtmlParseNoMoreString)
+			return HtmlParseNoMoreString;
+		if (result == HtmlAttributeEnd) {
+			//这里只考虑/> 和 >情况 ,特殊用法会在特殊子类中进行修改
+			while (1) {
+				if (index >= str->size())
+					return HtmlParseNoMoreString;
+
+				if (str->charAt(index) != L' ') {
+					if (str->charAt(index) == L'>') {
+						hasLeft = true;
+						index++;
+						return HtmlNodeEnd;
+					}
+				}
+				index++;
+			}
+		}
+	}
+
+};
 //document 节点存储一个html文件,在解析时其实没太大作用,主要的作用还是假如要用c++生成html文件时,需要加这样一个头结点
 //形式上就用它来读取<!DocType html>
 class HtmlDocument : public HtmlNode {
 public:
 	virtual int parseDeep(CharString * str, int& index, pStack pstack) override {
-		if (index >= str->size())
-			return HtmlParseNoMoreString;
-		if (str->charAt(index) == L'<')
-			return HtmlNodeNew;
+		do {
+			if (index >= str->size())
+				return HtmlParseNoMoreString;
+			if (str->charAt(index) == L'<')
+				return HtmlNodeNew;
+			index++;
+		} while (1);
 	}
 
 	//}
@@ -329,13 +422,8 @@ private:
 		static const CharString type_div(L"div");
 		static const CharString attribute_name_id (L"id");
 		static const CharString attribute_value_endText(L"endText");
-		if (dynamic_cast<HtmlMeta *>(node) != nullptr) {
-			//TODO meta是将信息藏在了attribute中,找一种方法提取出来
-		}
-		else {
-			if (node->isName(&type_div) && node->haveAttribute(&attribute_name_id, &attribute_value_endText)) {
-				endText_ = node->deepCopyOfText();
-			}
+		if (node->isName(&type_div) && node->haveAttribute(&attribute_name_id, &attribute_value_endText)) {
+			endText_ = node->deepCopyOfText();
 		}
 	}
 
@@ -368,25 +456,27 @@ private:
 	}
 
 	//输入时务必让index处为<
-	HtmlNode* createHtmlNode(CharString * str, int& index){
-	/*依照前面的 分为<meta 
-					<sciprt
-					<!--
-					<!
-					<
-					前面的优先
-	*/
+	HtmlNode* createHtmlNode(CharString * str, int& index) {
+		/*依照前面的 分为<meta
+						<sciprt
+						<!--
+						<!
+						<
+						前面的优先
+		*/
 		static const CharString meta(L"<meta");
 		static const CharString script(L"<script");
 		static const CharString comment(L"<!--");
 		static const CharString declaration(L"<!");
 		static const CharString element(L"<");
+		static const CharString linklike(L"<link");
 		//移动index 位置
 		static const int meta_len = 5;
 		static const int script_len = 7;
 		static const int comment_len = 4;
 		static const int declaration_len = 2;
 		static const int element_len = 1;
+		static const int linklike_len = 5;
 
 		if (str->indexOf(meta, index) == index) {
 			index += meta_len;
@@ -396,6 +486,10 @@ private:
 			index += script_len;
 			return new HtmlScript();
 		}
+		else if (str->indexOf(linklike, index) == index) {
+			index += linklike_len;
+			return new HtmlLinkLike();
+		}
 		else if (str->indexOf(comment, index) == index) {
 			index += comment_len;
 			return new HtmlComment();
@@ -404,14 +498,14 @@ private:
 			index += declaration_len;
 			return new HtmlDeclaration();
 		}
-		else if (str->charAt(0) == L'<') {
+		else if (str->charAt(index) == L'<') {
 			index += element_len;
 			return new HtmlNode();
 		}
-
-		//超过这个界限就代表出bug了
-		bool haveNewElement = 0;
-		assert(!haveNewElement);
+		else {//超过这个界限就代表出bug了
+			bool haveNewElement = 0;
+			assert(haveNewElement);
+		}
 	}
 public:
 	void parse(std::wstring url) {
@@ -428,6 +522,11 @@ public:
 		pStack stack = new Stack<HtmlNode*>();
 		stack->push(new HtmlDocument());
 		HtmlNode * now = stack->top();
+
+		std::wofstream os;
+		std::wstring buf = L"../input/log.txt";
+		os.imbue(loc);
+		os.open(buf);
 
 		while (getline(in, wstr)) {
 			CharString s(wstr);
@@ -450,6 +549,8 @@ public:
 				}
 					break;
 				case HtmlParseNoMoreString:
+					os << wstr << std::endl;
+					break;
 				default:
 					break;
 				}

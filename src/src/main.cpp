@@ -52,14 +52,25 @@ void testDict() {
 
 void testParser() {
 	HtmlParser parser;
-	parser.parse(L"../input/0.html");
+	parser.parse(L"../input/1.html");
+
+	cout << "good";
 }
 
+void testMemory() {
+	//CharString
+	while (1) {
+		CharString* a = new CharString(L"aaaaaaaaaaaa");
+		a->concat(L"aaaa");
+		delete a;
+	}
+}
 int main() {
 	//testStack();
 	//testString();
 	//testDict();
 	testParser();
+	//testMemory();
 
 	return 0;
 }
