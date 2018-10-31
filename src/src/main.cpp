@@ -37,7 +37,7 @@ void testString() {
 
 
 
-	cout << s->indexOf(str_1);
+	cout << s->indexOf(str_1, 0);
 }
 
 void testDict() {
@@ -57,8 +57,8 @@ void testParser() {
 
 int main() {
 	//testStack();
-	testString();
-	testDict();
+	//testString();
+	//testDict();
 	testParser();
 
 	return 0;

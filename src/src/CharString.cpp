@@ -103,7 +103,7 @@ CharString* CharString::subString(int begin, int end)
 	int new_size = end - begin;
 	new_str->resize(new_size);
 	for (int i = 0; i < new_size; i++)
-		(*new_str)[i] = charData_[i + begin];
+		new_str->push_back(this->charAt(i + begin));
 	return new_str;
 }
 
@@ -118,7 +118,7 @@ void CharString::concat(const CharString & str)
 	}
 
 	for (int i = 0; i < len; i++) {
-		charData_[i + old_size] = str[i];
+		push_back(str[i]);
 	}
 }
 
@@ -166,20 +166,24 @@ void CharString::resize(int maxSize)
 
 const wchar_t & CharString::operator[](int index) const
 {
+	assert(index < size_);
 	return charData_[index];
 }
 wchar_t & CharString::operator[](int index)
 {
+	assert(index < size_);
 	return charData_[index];
 }
 
 const wchar_t & CharString::charAt(int index) const
 {
+	assert(index < size_);
 	return charData_[index];// TODO: 在此处插入 return 语句
 }
 
 wchar_t & CharString::charAt(int index)
 {
+	assert(index < size_);
 	return charData_[index];// TODO: 在此处插入 return 语句
 }
 
@@ -194,4 +198,12 @@ bool CharString::equal(const CharString * rstr)
 		}
 		return true;
 	}
+}
+
+void CharString::push_back(wchar_t ch)
+{
+	if (size_ >= maxSize_) {
+		this->resize(maxSize_ + 1);
+	}
+	charData_[size_++] = ch;
 }

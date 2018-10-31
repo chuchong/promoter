@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <assert.h>
 //String字符串类,暂时用数组存储
 //推荐将其当做类似JAVA C#中的引用变量来用(即指针)
 class CharString
@@ -29,6 +30,7 @@ public:
 	wchar_t & charAt(int index);
 	//比较函数
 	bool equal (const CharString * rstr);
+	void push_back(wchar_t);
 	//
 
 	//CharString():charData_(NULL),size_(0),maxSize_(0){}
