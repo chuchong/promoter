@@ -86,8 +86,10 @@ int CharString::indexOf(const CharString & son_str, int start)
 			j_of_father++;
 		}
 
-		if (j_of_son == len)
+		if (j_of_son == len) {
+			delete[] kmp_next;//原来是这里的内存bug!!!!!
 			return(j_of_father - len);
+		}
 	}
 
 

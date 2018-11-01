@@ -14,6 +14,21 @@
 #include <ostream>
 #include <locale>
 #include <codecvt>
+
+#include <crtdbg.h>
+
+
+#ifdef _DEBUG
+#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#endif
+
+void EnableMemLeakCheck()
+{
+	int tmpFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
+	tmpFlag |= _CRTDBG_LEAK_CHECK_DF;
+	_CrtSetDbgFlag(tmpFlag);
+}
+
 using namespace std;
 void testStack() {
 	Stack<char> c;
@@ -51,9 +66,9 @@ void testDict() {
 }
 
 void testParser() {
+	EnableMemLeakCheck();
 
-
-	for (int i = 0; i <= 19; i++) {
+	for (int i = 0; i <= 1; i++) {
 		HtmlParser parser;
 		cout << "---------------------------" << i <<"---------------------" << endl;
 		parser.parse(L"../input/" + to_wstring(i) + L".html");
@@ -72,6 +87,8 @@ void testMemory() {
 	}
 }
 int main() {
+	//_CrtSetBreakAlloc(1134017);
+	//_CrtSetBreakAlloc(1134014);
 	//testStack();
 	//testString();
 	//testDict();
