@@ -132,7 +132,7 @@ void CharString::operator=(const CharString & str)
 		delete[] charData_;
 
 	charData_ = new wchar_t[maxSize_];
-	for (int i = 0; i++; i < size_)
+	for (int i = 0; i < size_; i++)
 		charData_[i] = str[i];
 }
 

@@ -6,7 +6,7 @@
 class CharString
 {
 	int maxSize_;
-	int size_;
+	int size_ = 0;
 	wchar_t* charData_;
 	friend class CharString;
 public:

@@ -53,7 +53,7 @@ void testDict() {
 void testParser() {
 
 
-	for (int i = 13; i <= 19; i++) {
+	for (int i = 0; i <= 19; i++) {
 		HtmlParser parser;
 		cout << "---------------------------" << i <<"---------------------" << endl;
 		parser.parse(L"../input/" + to_wstring(i) + L".html");

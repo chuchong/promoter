@@ -43,7 +43,8 @@ public:
 				else {
 					int nameIndex = str->indexOf(L"=", index);
 					assert(nameIndex != -1);
-					name_ = str->subString(index, nameIndex);
+					if(name_ == nullptr)
+						name_ = str->subString(index, nameIndex);
 					index = nameIndex + 1;
 					//认为值都是在""中
 					//三种情况 "" '' 没有
@@ -52,7 +53,8 @@ public:
 						while (str->charAt(index) != L'\'') {
 							index++;
 						}
-						value_ = str->subString(nameIndex + 2, index);
+						if(value_ == nullptr)
+							value_ = str->subString(nameIndex + 2, index);
 						index++;
 					}
 					else if (str->charAt(index) == L'\"') {
@@ -60,14 +62,16 @@ public:
 						while (str->charAt(index) != L'\"') {
 							index++;
 						}
-						value_ = str->subString(nameIndex + 2, index);
+						if (value_ == nullptr)
+							value_ = str->subString(nameIndex + 2, index);
 						index++;
 					}
 					else {
 						while (str->charAt(index) != L' ' && str->charAt(index) != L'/' && str->charAt(index) != L'>') {
 							index++;
 						}
-						value_ = str->subString(nameIndex + 1, index);
+						if (value_ == nullptr)
+							value_ = str->subString(nameIndex + 1, index);
 					}
 					return HtmlNodeNotEnd;
 				}
@@ -102,6 +106,17 @@ public:
 	HtmlNode *next_sibling = nullptr;
 public:
 	virtual void deepCopyOfText(CharString * result) = 0;
+	virtual void clearSons() {
+		while (children_first != nullptr) {
+			HtmlNode * next = children_first->next_sibling;
+			//children_first->clearSons();
+			delete children_first;
+			children_first = next;
+		}
+	}
+	virtual ~HtmlNode() {
+		clearSons();
+	}
 };
 
 class HtmlText : public HtmlNode {
@@ -174,7 +189,8 @@ public:
 			while ( index < str->size() && str->charAt(index) != L' ' && str->charAt(index) != L'/' && str->charAt(index) != L'>')
 				index++;
 			
-			name_ = str->subString(name_left_index, index);
+			if(name_ == nullptr)
+				name_ = str->subString(name_left_index, index);
 
 			int result = parseAttribute(str, index);
 			if (result == HtmlParseNoMoreString)
@@ -276,7 +292,7 @@ public:
 		//text_ = new CharString(L"");
 	}
 
-	~HtmlElement() {
+	virtual ~HtmlElement() {
 		delete name_;
 		//delete text_;
 		while (head_ != nullptr) {
@@ -501,19 +517,19 @@ private:
 		static const CharString pro_ttl(L"og:title");
 		static const CharString pro_pub(L"article:published_time");
 
-		if (node->haveAttribute(&prop, &pro_key)) {
+		if (keywords_ == nullptr && node->haveAttribute(&prop, &pro_key) ) {
 			keywords_ = new CharString(node->copyValueOfAttriName(&cont));
 		}
-		if (node->haveAttribute(&prop, &pro_des)) {
+		if (description_ == nullptr && node->haveAttribute(&prop, &pro_des)) {
 			description_ = new CharString(node->copyValueOfAttriName(&cont));
 		}
-		if (node->haveAttribute(&prop, &pro_ath)) {
+		if (author_ == nullptr  && node->haveAttribute(&prop, &pro_ath)) {
 			author_ = new CharString(node->copyValueOfAttriName(&cont));
 		}
-		if (node->haveAttribute(&prop, &pro_ttl)) {
+		if (title_ == nullptr && node->haveAttribute(&prop, &pro_ttl)) {
 			title_ = new CharString(node->copyValueOfAttriName(&cont));
 		}
-		if (node->haveAttribute(&prop, &pro_pub)) {
+		if (published_time_ == nullptr && node->haveAttribute(&prop, &pro_pub)) {
 			published_time_ = new CharString(node->copyValueOfAttriName(&cont));
 		}
 
@@ -634,6 +650,11 @@ public:
 				break;
 			}
 		} while (index < siz);
+		//读取完了删doc文件
+		doc->clearSons();
+		delete doc;
+		delete stack;
+		delete text;
 		//一行行读取太多问题了
 		//while (getline(in, wstr)) {
 		//	CharString s(wstr);
@@ -670,7 +691,18 @@ public:
 
 	}
 	~HtmlParser() {
-		//delete endText_;
+		if(endText_ != nullptr)
+			delete endText_;
+		if (keywords_ != nullptr)
+			delete keywords_ ;
+		if (title_!= nullptr)
+			delete title_ ;
+		if (description_ != nullptr)
+			delete description_;
+		if (author_ != nullptr)
+			delete author_ ;
+		if (published_time_ != nullptr)
+			delete published_time_;
 	}
 
 	void print() {
