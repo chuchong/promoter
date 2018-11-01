@@ -51,10 +51,16 @@ void testDict() {
 }
 
 void testParser() {
-	HtmlParser parser;
-	parser.parse(L"../input/0.html");
-	parser.print();
-	cout << "good";
+
+
+	for (int i = 13; i <= 19; i++) {
+		HtmlParser parser;
+		cout << "---------------------------" << i <<"---------------------" << endl;
+		parser.parse(L"../input/" + to_wstring(i) + L".html");
+		parser.print();
+		cout << "---------------------------" << i << "---------------------" << endl;
+	}
+	return;
 }
 
 void testMemory() {

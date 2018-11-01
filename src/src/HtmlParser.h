@@ -235,8 +235,11 @@ public:
 			result->concat(text_);
 		HtmlNode * node = children_first;
 		while (node != nullptr) {
-			node->deepCopyOfText(result);
-			node = node->next_sibling;
+			CharString buf(L"i");
+			if (!node->isName(&buf)) {
+				node->deepCopyOfText(result);
+			}
+				node = node->next_sibling;
 		}
 	}
 	HtmlNode() {
@@ -451,7 +454,13 @@ private:
 		if (node->haveAttribute(&attribute_name_id, &attribute_value_endText)) {
 			CharString* blank = new CharString(L"");
 			node->deepCopyOfText(blank);
-			endText_ = new CharString(blank);
+
+			if (endText_ == nullptr)
+				endText_ = new CharString(L"");
+			
+			endText_->concat(blank);
+
+			delete blank;
 		}
 	}
 
@@ -591,7 +600,8 @@ public:
 			}
 				break;
 			case HtmlParseNoMoreString:
-				os << wstr << std::endl;
+				index++;
+				//os << wstr << std::endl;
 				break;
 			default:
 				break;
@@ -633,7 +643,7 @@ public:
 
 	}
 	~HtmlParser() {
-		delete endText_;
+		//delete endText_;
 	}
 
 	void print() {
