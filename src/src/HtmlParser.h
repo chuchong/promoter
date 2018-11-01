@@ -58,7 +58,7 @@ public:
 						index++;
 					}
 					else {
-						while (str->charAt(index) != L' ') {
+						while (str->charAt(index) != L' ' && str->charAt(index) != L'/' && str->charAt(index) != L'>') {
 							index++;
 						}
 						value_ = str->subString(nameIndex + 1, index);
@@ -138,8 +138,9 @@ public:
 			return HtmlParseNoMoreString;
 		if (hasLeft == 0) {
 			int name_left_index = index;
-			while (str->charAt(index) != L' ' && str->charAt(index) != L'/' && str->charAt(index) != L'>')
+			while ( index < str->size() && str->charAt(index) != L' ' && str->charAt(index) != L'/' && str->charAt(index) != L'>')
 				index++;
+			
 			name_ = str->subString(name_left_index, index);
 
 			int result = parseAttribute(str, index);
@@ -422,7 +423,7 @@ private:
 		static const CharString type_div(L"div");
 		static const CharString attribute_name_id (L"id");
 		static const CharString attribute_value_endText(L"endText");
-		if (node->isName(&type_div) && node->haveAttribute(&attribute_name_id, &attribute_value_endText)) {
+		if (node->haveAttribute(&attribute_name_id, &attribute_value_endText)) {
 			endText_ = node->deepCopyOfText();
 		}
 	}

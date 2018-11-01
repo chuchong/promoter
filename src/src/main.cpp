@@ -52,7 +52,7 @@ void testDict() {
 
 void testParser() {
 	HtmlParser parser;
-	parser.parse(L"../input/1.html");
+	parser.parse(L"../input/2.html");
 
 	cout << "good";
 }
