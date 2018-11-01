@@ -60,11 +60,11 @@ inline T Stack<T>::top()
 template<class T>
 inline bool Stack<T>::empty()
 {
-	return head == 0;
+	return head == nullptr;
 }
 
 template<class T>
-inline Stack<T>::Stack():head(0)
+inline Stack<T>::Stack():head(nullptr)
 {
 }
 

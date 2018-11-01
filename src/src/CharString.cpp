@@ -111,14 +111,15 @@ void CharString::concat(const CharString & str)
 {
 	int len = str.size();
 	int old_size = size_;//copy
-	size_ += len;
-
-	if (len + size_ > maxSize_) {
-		resize(len + size_);
+	
+	int new_size = size_ + len;
+	if (new_size > maxSize_) {
+		resize(new_size);
 	}
 
+	size_ = new_size;
 	for (int i = 0; i < len; i++) {
-		push_back(str[i]);
+		charData_[i + old_size] = str.charAt(i);
 	}
 }
 
@@ -150,8 +151,8 @@ void CharString::operator=(const std::string & str)
 
 void CharString::resize(int maxSize)
 {
-	maxSize_ = maxSize;
-	wchar_t *new_Data = new wchar_t[maxSize_];
+	//size_不变,maxsize_变化
+	wchar_t *new_Data = new wchar_t[maxSize];
 	//若改变新的最大大小反而更小了,就截断
 	if (maxSize_ < size_)
 		size_ = maxSize_;
@@ -162,6 +163,7 @@ void CharString::resize(int maxSize)
 	if(charData_ != NULL)
 		delete[] charData_;
 	charData_ = new_Data;
+	maxSize_ = maxSize;
 }
 
 const wchar_t & CharString::operator[](int index) const

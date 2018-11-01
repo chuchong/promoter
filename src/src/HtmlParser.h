@@ -3,16 +3,20 @@
 #pragma once
 #include <string>
 #include <fstream>
+
 #include <ostream>
+#include <locale>
 #include <codecvt>
 #include <assert.h>
 #include "Stack.h"
 #include "CharString.h"
+#include <iostream>
 #define HtmlNodeEnd 0
 #define HtmlNodeNew 1
 #define HtmlParseNoMoreString 2
 #define HtmlNodeNotEnd 3
 #define HtmlAttributeEnd 4
+#define HtmlPleaseAddString 5
 //4 指<> 5 指<.. />
 //html 标签类,即是<p width="1" 中width="1"部分
 
@@ -225,8 +229,15 @@ public:
 	}
 
 	//返回复制自身text_的深度复制引用变量 
-	virtual CharString * deepCopyOfText() {
-		return new CharString(text_);
+	virtual void deepCopyOfText(CharString * result) {
+		
+		if (text_ != nullptr)
+			result->concat(text_);
+		HtmlNode * node = children_first;
+		while (node != nullptr) {
+			node->deepCopyOfText(result);
+			node = node->next_sibling;
+		}
 	}
 	HtmlNode() {
 		//name_ = new CharString(L"");
@@ -242,6 +253,19 @@ public:
 			delete attri;
 		}
 	}
+	public:
+		HtmlNode *children_first = nullptr;
+		HtmlNode *children_last = nullptr;
+		HtmlNode *next_sibling = nullptr;
+		void push_child(HtmlNode * child) {
+			if (children_first == nullptr) {
+				children_first = children_last = child;
+			}
+			else {
+				children_last->next_sibling = child;
+				children_last = child;
+			}
+		}
 };
 ////div 中才存有正文部分所以有需要可以专门给他设立一个,而其他部分就可以忽略text了,但为了可能的工作需要,暂不写这个
 //class HtmlDiv: public HtmlNode {
@@ -399,7 +423,8 @@ class HtmlDeclaration : public HtmlNode {
 public:
 	//virtual int parseDeep(CharString * str, int& index, pStack pstack) override {
 	virtual int parseDeep(CharString * str, int& index, pStack stack) override{
-		index = str->size();
+		index = str->indexOf(L">",index);
+		index++;
 		return HtmlNodeEnd;
 	}
 	//}
@@ -424,7 +449,9 @@ private:
 		static const CharString attribute_name_id (L"id");
 		static const CharString attribute_value_endText(L"endText");
 		if (node->haveAttribute(&attribute_name_id, &attribute_value_endText)) {
-			endText_ = node->deepCopyOfText();
+			CharString* blank = new CharString(L"");
+			node->deepCopyOfText(blank);
+			endText_ = new CharString(blank);
 		}
 	}
 
@@ -471,6 +498,8 @@ private:
 		static const CharString declaration(L"<!");
 		static const CharString element(L"<");
 		static const CharString linklike(L"<link");
+		static const CharString img(L"<img");
+
 		//移动index 位置
 		static const int meta_len = 5;
 		static const int script_len = 7;
@@ -478,6 +507,7 @@ private:
 		static const int declaration_len = 2;
 		static const int element_len = 1;
 		static const int linklike_len = 5;
+		static const int img_len = 4;
 
 		if (str->indexOf(meta, index) == index) {
 			index += meta_len;
@@ -489,6 +519,10 @@ private:
 		}
 		else if (str->indexOf(linklike, index) == index) {
 			index += linklike_len;
+			return new HtmlLinkLike();
+		}
+		else if (str->indexOf(img, index) == index) {
+			index += img_len;
 			return new HtmlLinkLike();
 		}
 		else if (str->indexOf(comment, index) == index) {
@@ -521,7 +555,8 @@ public:
 		std::wstring wstr;
 
 		pStack stack = new Stack<HtmlNode*>();
-		stack->push(new HtmlDocument());
+		HtmlNode *doc = new HtmlDocument();
+		stack->push(doc);
 		HtmlNode * now = stack->top();
 
 		std::wofstream os;
@@ -529,40 +564,88 @@ public:
 		os.imbue(loc);
 		os.open(buf);
 
+		CharString* text = new CharString(L"");
+
 		while (getline(in, wstr)) {
 			CharString s(wstr);
-
-			int index = 0;
-			int state;
-			do {
-				now = stack->top();
-				state = now->parseDeep(&s, index, stack);
-				switch (state) {
-				case HtmlNodeEnd:
-					extractInfo(stack->top());
-					delete stack->top();
-					stack->pop();
-					break;
-				case HtmlNodeNew:
-				{
-					HtmlNode *newNode = createHtmlNode(&s, index);
-					stack->push(newNode);
-				}
-					break;
-				case HtmlParseNoMoreString:
-					os << wstr << std::endl;
-					break;
-				default:
-					break;
-				}
-			} while (state != HtmlParseNoMoreString);
+			text->concat(&s);
 		}
+		int siz = text->size();
+		int index = 0;
+		int state;
+
+		do {
+			now = stack->top();
+			state = now->parseDeep(text, index, stack);
+			switch (state) {
+			case HtmlNodeEnd:
+				extractInfo(stack->top());
+				//delete stack->top();
+				stack->pop();
+				break;
+			case HtmlNodeNew:
+			{
+				HtmlNode *newNode = createHtmlNode(text, index);
+				stack->top()->push_child(newNode);
+				stack->push(newNode);
+			}
+				break;
+			case HtmlParseNoMoreString:
+				os << wstr << std::endl;
+				break;
+			default:
+				break;
+			}
+		} while (index < siz);
+		//一行行读取太多问题了
+		//while (getline(in, wstr)) {
+		//	CharString s(wstr);
+
+		//	int index = 0;
+		//	int state;
+		//	do {
+		//		now = stack->top();
+		//		state = now->parseDeep(&s, index, stack);
+		//		switch (state) {
+		//		case HtmlNodeEnd:
+		//			extractInfo(stack->top());
+		//			//delete stack->top();
+		//			stack->pop();
+		//			break;
+		//		case HtmlNodeNew:
+		//		{
+		//			HtmlNode *newNode = createHtmlNode(&s, index);
+		//			stack->top()->push_child(newNode);
+		//			stack->push(newNode);
+		//		}
+		//			break;
+		//		case HtmlParseNoMoreString:
+		//			os << wstr << std::endl;
+		//			break;
+		//		default:
+		//			break;
+		//		}
+		//	} while (state != HtmlParseNoMoreString);
+		//}
+		return;
 	}
 	HtmlParser() {
 
 	}
 	~HtmlParser() {
 		delete endText_;
+	}
+
+	void print() {
+		if (endText_ == nullptr) {
+			std::wcout << "bug!";
+			return;
+		}
+		for (int i = 0; i < endText_->size(); i++) {
+			std::locale loc("chs");
+			std::wcout.imbue(loc);
+			std::wcout << endText_->charAt(i);
+		}
 	}
 };
 
