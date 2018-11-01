@@ -20,7 +20,9 @@
 //4 指<> 5 指<.. />
 //html 标签类,即是<p width="1" 中width="1"部分
 
-#define pStack Stack<HtmlNode*>*
+#define pStack Stack<HtmlElement*>*
+
+
 
 class HtmlAttribute {
 private:
@@ -94,11 +96,38 @@ public:
 };
 //html 节点类指定parse 策略
 class HtmlNode {
+public:
+	HtmlNode *children_first = nullptr;
+	HtmlNode *children_last = nullptr;
+	HtmlNode *next_sibling = nullptr;
+public:
+	virtual void deepCopyOfText(CharString * result) = 0;
+};
+
+class HtmlText : public HtmlNode {
+	CharString * text_;
+public:
+	HtmlText(CharString * t) {
+		text_ = new CharString(t);
+	}
+	~HtmlText() {
+		delete text_;
+	}
+	virtual void deepCopyOfText(CharString * result) override {
+
+		if (text_ != nullptr)
+			result->concat(text_);
+		return;
+	}
+};
+
+class HtmlElement:public HtmlNode {
 protected:
 	HtmlAttribute * head_ = nullptr;//一个双向链表,只需要头指针就够了
 	CharString * name_ = nullptr;//存储自身名字
-	CharString * text_ = nullptr;//存储所有文字
+	//CharString * text_ = nullptr;//存储所有文字
 								//TODO:如果要生成html对应语法树的话,需要将text部分作为一个单独的Node子类型
+								
 	bool hasLeft = 0;//指示是否已经读取完了左半部分
 public:
 	virtual bool isMeta() {
@@ -177,7 +206,8 @@ public:
 			if (nextIndex == -1) {
 				if (nextIndex > index) {
 					CharString * sub_str = str->subString(index, str->size());
-					text_->concat(sub_str);
+					HtmlNode * text = new HtmlText(sub_str);
+					push_child(text);
 					delete sub_str;
 				}
 				return HtmlParseNoMoreString;
@@ -185,7 +215,8 @@ public:
 			else {
 				if (nextIndex > index) {
 					CharString * sub_str = str->subString(index, nextIndex);
-					text_->concat(sub_str);
+					HtmlNode * text = new HtmlText(sub_str);
+					push_child(text);
 					delete sub_str;
 				}
 
@@ -231,25 +262,23 @@ public:
 	//返回复制自身text_的深度复制引用变量 
 	virtual void deepCopyOfText(CharString * result) {
 		
-		if (text_ != nullptr)
-			result->concat(text_);
 		HtmlNode * node = children_first;
 		while (node != nullptr) {
 			CharString buf(L"i");
-			if (!node->isName(&buf)) {
+			if (!(dynamic_cast<HtmlElement*>(node) != nullptr && dynamic_cast<HtmlElement*>(node)->isName(&buf))) {
 				node->deepCopyOfText(result);
 			}
 				node = node->next_sibling;
 		}
 	}
-	HtmlNode() {
+	HtmlElement() {
 		//name_ = new CharString(L"");
-		text_ = new CharString(L"");
+		//text_ = new CharString(L"");
 	}
 
-	~HtmlNode() {
+	~HtmlElement() {
 		delete name_;
-		delete text_;
+		//delete text_;
 		while (head_ != nullptr) {
 			HtmlAttribute *attri = head_;
 			head_ = head_->next_;
@@ -257,9 +286,7 @@ public:
 		}
 	}
 	public:
-		HtmlNode *children_first = nullptr;
-		HtmlNode *children_last = nullptr;
-		HtmlNode *next_sibling = nullptr;
+
 		void push_child(HtmlNode * child) {
 			if (children_first == nullptr) {
 				children_first = children_last = child;
@@ -279,7 +306,7 @@ public:
 //
 
 //因为javascript代码中会出现干扰的< > 符号,所以需要单独抽取出
-class HtmlScript: public HtmlNode {
+class HtmlScript: public HtmlElement {
 public:
 	HtmlScript() {
 		name_ = new CharString(L"script");
@@ -320,7 +347,7 @@ public:
 	}
 };
 //注释部分也需要单独处理
-class HtmlComment: public HtmlNode{
+class HtmlComment: public HtmlElement{
 public:
 	virtual int parseDeep(CharString * str, int& index, pStack stack) override {
 		int next = str->indexOf(L"-->", index);
@@ -333,7 +360,7 @@ public:
 	}
 };
 //meta的语法比较特殊
-class HtmlMeta : public HtmlNode {
+class HtmlMeta : public HtmlElement {
 	public:
 	HtmlMeta() {
 		name_ = new CharString(L"meta");
@@ -373,7 +400,7 @@ class HtmlMeta : public HtmlNode {
 	}
 };
 //还有哪些类似htmllink不需要结束符号的都一起拿来弄了
-class HtmlLinkLike: public HtmlNode {
+class HtmlLinkLike: public HtmlElement {
 public:
 	HtmlLinkLike() {
 		name_ = new CharString(L"");//没名字,不影响
@@ -407,7 +434,7 @@ public:
 };
 //document 节点存储一个html文件,在解析时其实没太大作用,主要的作用还是假如要用c++生成html文件时,需要加这样一个头结点
 //形式上就用它来读取<!DocType html>
-class HtmlDocument : public HtmlNode {
+class HtmlDocument : public HtmlElement {
 public:
 	virtual int parseDeep(CharString * str, int& index, pStack pstack) override {
 		do {
@@ -422,7 +449,7 @@ public:
 	//}
 };
 
-class HtmlDeclaration : public HtmlNode {
+class HtmlDeclaration : public HtmlElement {
 public:
 	//virtual int parseDeep(CharString * str, int& index, pStack pstack) override {
 	virtual int parseDeep(CharString * str, int& index, pStack stack) override{
@@ -443,7 +470,7 @@ private:
 	CharString * published_time_ = nullptr;
 	CharString * endText_ = nullptr;
 private:
-	void extractInfo(HtmlNode * node){
+	void extractInfo(HtmlElement * node){
 		if (dynamic_cast<HtmlMeta*> (node) != nullptr) {
 			extractInfoFromMeta(node);
 			return;
@@ -464,7 +491,7 @@ private:
 		}
 	}
 
-	void extractInfoFromMeta(HtmlNode * node) {
+	void extractInfoFromMeta(HtmlElement * node) {
 		static const CharString prop(L"property");
 		static const CharString cont(L"content");
 
@@ -493,7 +520,7 @@ private:
 	}
 
 	//输入时务必让index处为<
-	HtmlNode* createHtmlNode(CharString * str, int& index) {
+	HtmlElement* createHtmlNode(CharString * str, int& index) {
 		/*依照前面的 分为<meta
 						<sciprt
 						<!--
@@ -544,7 +571,7 @@ private:
 		}
 		else if (str->charAt(index) == L'<') {
 			index += element_len;
-			return new HtmlNode();
+			return new HtmlElement();
 		}
 		else {//超过这个界限就代表出bug了
 			bool haveNewElement = 0;
@@ -563,10 +590,10 @@ public:
 		std::string str;
 		std::wstring wstr;
 
-		pStack stack = new Stack<HtmlNode*>();
-		HtmlNode *doc = new HtmlDocument();
+		pStack stack = new Stack<HtmlElement*>();
+		HtmlElement *doc = new HtmlDocument();
 		stack->push(doc);
-		HtmlNode * now = stack->top();
+		HtmlElement * now = stack->top();
 
 		std::wofstream os;
 		std::wstring buf = L"../input/log.txt";
@@ -594,7 +621,7 @@ public:
 				break;
 			case HtmlNodeNew:
 			{
-				HtmlNode *newNode = createHtmlNode(text, index);
+				HtmlElement *newNode = createHtmlNode(text, index);
 				stack->top()->push_child(newNode);
 				stack->push(newNode);
 			}
