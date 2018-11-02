@@ -15,7 +15,8 @@
 #include <ostream>
 #include <locale>
 #include <codecvt>
-
+#include <io.h>
+#include <vector>//只用于提取同级目录下所有文件
 #include <crtdbg.h>
 
 
@@ -67,13 +68,23 @@ void testDict() {
 }
 
 void testParser() {
+	//HtmlParser parser;
+	//parser.parse(L"../input/test.html");
+	//parser.output();
+	Devider d;
+	Searcher s;
+	s.parse("../dictionary/词库.dic");
 
-
-	for (int i = 0; i <= 20; i++) {
+	for (int i = 21; i <= 25; i++) {
+		CharStringLink l;
 		HtmlParser parser;
 		cout << "---------------------------" << i <<"---------------------" << endl;
+		CharString a(L"./output/1");
+		parser.setDoc(&a);
 		parser.parse(L"../input/" + to_wstring(i) + L".html");
-		parser.print();
+		parser.output();
+		d.devide(parser.getText(), &s, &l);
+		l.output(parser.getDoc());
 		cout << "---------------------------" << i << "---------------------" << endl;
 	}
 	return;
@@ -108,16 +119,100 @@ void testINI() {
 
 	return;
 }
+
+
+std::wstring s2ws(const string& s)
+{
+	setlocale(LC_ALL, "chs");
+
+	const char* _Source = s.c_str();
+	size_t _Dsize = s.size() + 1;
+	wchar_t *_Dest = new wchar_t[_Dsize];
+	wmemset(_Dest, 0, _Dsize);
+	mbstowcs(_Dest, _Source, _Dsize);
+	wstring result = _Dest;
+	delete[]_Dest;
+
+	setlocale(LC_ALL, "C");
+
+	return result;
+}
+void getFiles(string path, vector<string>& files)
+{
+	//文件句柄  
+	long   hFile = 0;
+	//文件信息  
+	struct _finddata_t fileinfo;
+	string p;
+	if ((hFile = _findfirst(p.assign(path).append("\\*").c_str(), &fileinfo)) != -1)
+	{
+		do
+		{
+			//如果是目录,迭代之  
+			//如果不是,加入列表  
+			if ((fileinfo.attrib &  _A_SUBDIR))
+			{
+				if (strcmp(fileinfo.name, ".") != 0 && strcmp(fileinfo.name, "..") != 0)
+					getFiles(p.assign(path).append("\\").append(fileinfo.name), files);
+			}
+			else
+			{
+				files.push_back(p.assign(path).append("\\").append(fileinfo.name));
+			}
+		} while (_findnext(hFile, &fileinfo) == 0);
+		_findclose(hFile);
+	}
+}
+
+void work() {
+	std::vector<string> files;
+
+	string filePath("input/");
+	////获取该路径下的所有文件  
+	getFiles(filePath, files);
+
+	Devider d;
+	Searcher s;
+	s.parse("../dictionary/词库.dic");
+
+	for (string file : files) {
+		std::wstring  wide = s2ws(file);
+		CharString str(wide);
+		if (str.indexOf(L".html",0) == -1)
+			continue;
+
+		int left = str.indexOf(L"\\", 0) + 1;
+		int right = str.indexOf(L".html", 0);
+		CharStringLink l;
+		HtmlParser parser;
+
+		CharString * sub = str.subString(left, right);
+		CharString out(L"./output/");
+		out.concat(sub);
+		delete sub;
+		parser.setDoc(&out);
+		std::locale loc("chs");
+		std::wcout.imbue(loc);
+
+		std::wcout << "---------------------------" << str << "---------------------" << endl;
+		parser.parse(wide);
+		parser.output();
+		d.devide(parser.getText(), &s, &l);
+		l.output(parser.getDoc());
+		std::wcout << "---------------------------" <<str<< "---------------------" << endl;
+	}
+
+}
 int main() {
 	//_CrtSetBreakAlloc(1134017);
 	//_CrtSetBreakAlloc(1134014);
 	//testStack();
 	//testString();
 	//testDict();
-	testParser();
+	//testParser();
 	//testMemory();
 	//EnableMemLeakCheck();
 	//testDevider();
-
+	work();
 	return 0;
 }

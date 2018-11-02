@@ -218,6 +218,14 @@ void CharString::pop_back()
 	charData_[size_] = L'0';
 }
 
+std::wstring CharString::to_wstring()
+{
+	std::wstring str;
+	for (int i = 0; i < size_; i++)
+		str.push_back(charData_[i]);
+	return str;
+}
+
 void CharString::print()
 {
 	std::wcout.imbue(std::locale("chs"));

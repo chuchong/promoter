@@ -1,4 +1,11 @@
 #pragma once
+#include <string>
+#include <fstream>
+
+#include <ostream>
+#include <locale>
+#include <codecvt>
+#include <assert.h>
 #include "CharString.h"
 struct CharStringNode {
 	CharStringNode *next;
@@ -45,6 +52,19 @@ public:
 	}
 	//查找是否存在,若不存在,返回-1
 	int search(const CharString & str);
+	void output(CharString * place) {
+		std::wstring url = place->to_wstring() + L".txt";
+		std::locale loc("chs");
+		std::wofstream os;
+		os.imbue(loc);
+		os.open(url);
+
+		CharStringNode *node = head;
+		while (node != nullptr) {
+			os << (*(node->str)) << std::endl;
+			node = node->next;
+		}
+	}
 	CharStringLink();
 	~CharStringLink();
 };

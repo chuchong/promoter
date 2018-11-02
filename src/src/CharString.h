@@ -35,6 +35,7 @@ public:
 	void push_back(wchar_t);
 	//用给分词器,降低复杂度
 	void pop_back();
+	std::wstring to_wstring();
 
 	void print();
 	friend std::wostream & operator <<(std::wostream &os, CharString & str);
