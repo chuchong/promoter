@@ -147,7 +147,7 @@ void CharString::operator=(const std::string & str)
 		delete[] charData_;
 
 	charData_ = new wchar_t[maxSize_];
-	for (int i = 0; i++; i < size_)
+	for (int i = 0; i < size_; i++)
 		charData_[i] = str[i];
 }
 
@@ -210,4 +210,25 @@ void CharString::push_back(wchar_t ch)
 		this->resize(maxSize_ + 1);
 	}
 	charData_[size_++] = ch;
+}
+
+void CharString::pop_back()
+{
+	size_--;
+	charData_[size_] = L'0';
+}
+
+void CharString::print()
+{
+	std::wcout.imbue(std::locale("chs"));
+	for (int i = 0; i < size_; i++)
+		std::wcout << charData_[i];
+}
+
+std::wostream & operator<<(std::wostream & os, CharString & str)
+{
+	// TODO: 在此处插入 return 语句
+	for (int i = 0; i < str.size_; i++)
+		os << str.charAt(i);
+	return os;
 }

@@ -42,7 +42,16 @@ public:
 				}
 				else {
 					int nameIndex = str->indexOf(L"=", index);
-					assert(nameIndex != -1);
+					//有可能有bug 就直接跳过完了吧
+					if (nameIndex == -1) {
+						if (str->indexOf(L"/", index) != -1)
+							nameIndex = str->indexOf(L"/", index);
+						else
+							nameIndex = str->indexOf(L">", index);
+
+						index = nameIndex;
+						return HtmlAttributeEnd;
+					}
 					if(name_ == nullptr)
 						name_ = str->subString(index, nameIndex);
 					index = nameIndex + 1;
@@ -595,6 +604,9 @@ private:
 		}
 	}
 public:
+	CharString * getText() {
+		return endText_;
+	}
 	void parse(std::wstring url) {
 
 		std::locale loc("chs");//windows下ok
@@ -618,73 +630,84 @@ public:
 
 		CharString* text = new CharString(L"");
 
-		while (getline(in, wstr)) {
-			CharString s(wstr);
-			text->concat(&s);
-		}
-		int siz = text->size();
-		int index = 0;
-		int state;
-
-		do {
-			now = stack->top();
-			state = now->parseDeep(text, index, stack);
-			switch (state) {
-			case HtmlNodeEnd:
-				extractInfo(stack->top());
-				//delete stack->top();
-				stack->pop();
-				break;
-			case HtmlNodeNew:
-			{
-				HtmlElement *newNode = createHtmlNode(text, index);
-				stack->top()->push_child(newNode);
-				stack->push(newNode);
-			}
-				break;
-			case HtmlParseNoMoreString:
-				index++;
-				//os << wstr << std::endl;
-				break;
-			default:
-				break;
-			}
-		} while (index < siz);
-		//读取完了删doc文件
-		doc->clearSons();
-		delete doc;
-		delete stack;
-		delete text;
-		//一行行读取太多问题了
 		//while (getline(in, wstr)) {
 		//	CharString s(wstr);
-
-		//	int index = 0;
-		//	int state;
-		//	do {
-		//		now = stack->top();
-		//		state = now->parseDeep(&s, index, stack);
-		//		switch (state) {
-		//		case HtmlNodeEnd:
-		//			extractInfo(stack->top());
-		//			//delete stack->top();
-		//			stack->pop();
-		//			break;
-		//		case HtmlNodeNew:
-		//		{
-		//			HtmlNode *newNode = createHtmlNode(&s, index);
-		//			stack->top()->push_child(newNode);
-		//			stack->push(newNode);
-		//		}
-		//			break;
-		//		case HtmlParseNoMoreString:
-		//			os << wstr << std::endl;
-		//			break;
-		//		default:
-		//			break;
-		//		}
-		//	} while (state != HtmlParseNoMoreString);
+		//	text->concat(&s);
 		//}
+		//int siz = text->size();
+		//int index = 0;
+		//int state;
+
+		//do {
+		//	now = stack->top();
+		//	state = now->parseDeep(text, index, stack);
+		//	switch (state) {
+		//	case HtmlNodeEnd:
+		//		extractInfo(stack->top());
+		//		//delete stack->top();
+		//		stack->pop();
+		//		break;
+		//	case HtmlNodeNew:
+		//	{
+		//		HtmlElement *newNode = createHtmlNode(text, index);
+		//		stack->top()->push_child(newNode);
+		//		stack->push(newNode);
+		//	}
+		//		break;
+		//	case HtmlParseNoMoreString:
+		//		index++;
+		//		//os << wstr << std::endl;
+		//		break;
+		//	default:
+		//		break;
+		//	}
+		//} while (index < siz);
+		////读取完了删doc文件
+		//doc->clearSons();
+		//delete doc;
+		//delete stack;
+		//delete text;
+		//一行行读取太多问题了
+		while (getline(in, wstr)) {
+			int index = 0;
+			CharString s(wstr);
+			while (s.charAt(s.size() - 1) != L'>') {
+				std::wstring next;
+				getline(in, next);
+				s.concat(next);
+			}
+
+			os << s;
+
+			int state;
+			do {
+				now = stack->top();
+				state = now->parseDeep(&s, index, stack);
+				switch (state) {
+				case HtmlNodeEnd:
+					extractInfo(stack->top());
+					//delete stack->top();
+					stack->pop();
+					break;
+				case HtmlNodeNew:
+				{
+					HtmlElement *newNode = createHtmlNode(&s, index);
+					stack->top()->push_child(newNode);
+					stack->push(newNode);
+				}
+					break;
+				case HtmlParseNoMoreString:
+					os << wstr << std::endl;
+					break;
+				default:
+					break;
+				}
+			} while (state != HtmlParseNoMoreString);
+		}
+
+		delete doc;
+		delete stack;
+
 		return;
 	}
 	HtmlParser() {

@@ -8,6 +8,7 @@
 #include "HashDict.h"
 #include "Searcher.h"
 #include "HtmlParser.h"
+#include "Devider.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -66,9 +67,9 @@ void testDict() {
 }
 
 void testParser() {
-	EnableMemLeakCheck();
 
-	for (int i = 0; i <= 1; i++) {
+
+	for (int i = 0; i <= 20; i++) {
 		HtmlParser parser;
 		cout << "---------------------------" << i <<"---------------------" << endl;
 		parser.parse(L"../input/" + to_wstring(i) + L".html");
@@ -86,6 +87,27 @@ void testMemory() {
 		delete a;
 	}
 }
+
+void testDevider() {
+	Devider d;
+	CharString test_word(L"做外套来穿的话，里面的内搭一定要修身，不然看起来会很显胖");
+	Searcher s;
+	s.parse("../dictionary/词库.dic");
+	CharStringLink l;
+	HtmlParser p;
+	p.parse(L"../input/20.html");
+	p.getText();
+	d.devide(p.getText(), &s, &l);
+	l.print();
+	return;
+}
+
+void testINI() {
+	Searcher s;
+	s.parse("../dictionary/词库.dic");
+
+	return;
+}
 int main() {
 	//_CrtSetBreakAlloc(1134017);
 	//_CrtSetBreakAlloc(1134014);
@@ -94,6 +116,8 @@ int main() {
 	//testDict();
 	testParser();
 	//testMemory();
+	//EnableMemLeakCheck();
+	//testDevider();
 
 	return 0;
 }

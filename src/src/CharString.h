@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <assert.h>
+#include <iostream>
+#include <locale>
 //String字符串类,暂时用数组存储
 //推荐将其当做类似JAVA C#中的引用变量来用(即指针)
 class CharString
@@ -31,8 +33,11 @@ public:
 	//比较函数
 	bool equal (const CharString * rstr);
 	void push_back(wchar_t);
-	//
+	//用给分词器,降低复杂度
+	void pop_back();
 
+	void print();
+	friend std::wostream & operator <<(std::wostream &os, CharString & str);
 	//CharString():charData_(NULL),size_(0),maxSize_(0){}
 	CharString(const std::wstring &);
 	CharString(const wchar_t[]);

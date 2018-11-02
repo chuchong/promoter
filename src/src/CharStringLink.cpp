@@ -18,6 +18,19 @@ void CharStringLink::add(const std::wstring & str)
 
 }
 
+void CharStringLink::add(CharString * node)
+{
+	if (head == NULL) {
+		head = end = new CharStringNode(node);
+	}
+	else {
+		end->next = new CharStringNode(node);
+		end->next->prior = end;
+		end =  end->next;
+	}
+
+}
+
 void CharStringLink::deleteAt(int index)
 {
 	CharStringNode * node = head;
@@ -29,6 +42,7 @@ void CharStringLink::deleteAt(int index)
 void CharStringLink::remove(CharStringNode * node)
 {
 	//TODO 给个iterator方式来遍历 删除啥的
+	//有bug!!! 
 	if(node->prior != NULL)
 		node->prior->next = node->next;
 	if(node->next != NULL)
@@ -49,6 +63,11 @@ CharStringLink::CharStringLink():head(NULL), end(NULL)
 
 CharStringLink::~CharStringLink()
 {
-	while (!isEmpty())
-		remove(head);
+	
+	while(head != nullptr){
+		CharStringNode * node = head;
+		head = head->next;
+		delete node;
+	}
+
 }

@@ -8,7 +8,12 @@ struct CharStringNode {
 		prior = next = NULL;
 		str = NULL;
 	}
+	CharStringNode(CharString * s) {
+		prior = next = NULL;
+		str = s;
+	}
 	~CharStringNode() {
+		if(str != nullptr)
 		delete str;
 	}
 };
@@ -26,8 +31,18 @@ public:
 	}
 
 	void add(const std::wstring & str);
+	void add(CharString * str);
 	//删除位于第n个的str
 	void deleteAt(int index);
+	//dayin
+	void print() {
+		CharStringNode * node = head;
+		while (node != nullptr) {
+			node->str->print();
+			std::cout << " ";
+			node = node->next;
+		}
+	}
 	//查找是否存在,若不存在,返回-1
 	int search(const CharString & str);
 	CharStringLink();
