@@ -139,12 +139,14 @@ public:
 			//TODO 这样可能会有问题
 			int i = 0;
 			for (; i < text_->size(); i++) {
-				if (text_->charAt(i) != L' ')
+				if (text_->charAt(i) != L' ' && text_->charAt(i) != L'\t')
 					break;
 			}
-			if (i == text_->size())
+			if (i >= text_->size())
 				return;
-			result->concat(text_);
+			CharString * sub = text_->subString(i, text_->size());
+			result->concat(sub);
+			delete sub;
 		}
 		return;
 	}
@@ -303,15 +305,13 @@ public:
 
 	//返回复制自身text_的深度复制引用变量 
 	virtual void deepCopyOfText(CharString * result) {
-		//TODO 为了格式的无奈之举
-
 
 		int size = result->size();
 
 		HtmlNode * node = children_first;
 		while (node != nullptr) {
-			CharString i(L"i");
-			CharString sty(L"style");
+			CharString i(L"i");//图片url 没必要留着
+			CharString sty(L"style");//div 没必要
 			if (!((dynamic_cast<HtmlElement*>(node) != nullptr && dynamic_cast<HtmlElement*>(node)->isName(&i))
 				||(dynamic_cast<HtmlElement*>(node) != nullptr && dynamic_cast<HtmlElement*>(node)->isName(&sty))
 				)
@@ -320,9 +320,9 @@ public:
 			}
 			node = node->next_sibling;
 		}
-		CharString s(L"p");
-		if (isName(&s) && result->size() > size)
-			result->push_back(L'\n');
+		//CharString s(L"p");
+		//if (isName(&s) && result->size() > size)
+		//	result->push_back(L'\n');
 	}
 	HtmlElement() {
 		//name_ = new CharString(L"");
@@ -489,7 +489,7 @@ class HtmlP :public HtmlLinkLike{
 public:
 	HtmlP() {
 		CharString f = L"\n";
-		this->children_first = new HtmlText(&f);
+		this->push_child(new HtmlText(&f));
 	}
 };
 //document 节点存储一个html文件,在解析时其实没太大作用,主要的作用还是假如要用c++生成html文件时,需要加这样一个头结点
