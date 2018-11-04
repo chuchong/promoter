@@ -137,8 +137,12 @@ public:
 	virtual void deepCopyOfText(CharString * result) override {
 		if (text_ != nullptr) {
 			//TODO 这样可能会有问题
-			int size = text_->size();
-			if (text_->charAt(size - 1) == L' ' && text_->charAt(0) == L' ')
+			int i = 0;
+			for (; i < text_->size(); i++) {
+				if (text_->charAt(i) != L' ')
+					break;
+			}
+			if (i == text_->size())
 				return;
 			result->concat(text_);
 		}
@@ -300,12 +304,18 @@ public:
 	//返回复制自身text_的深度复制引用变量 
 	virtual void deepCopyOfText(CharString * result) {
 		//TODO 为了格式的无奈之举
+
+
 		int size = result->size();
 
 		HtmlNode * node = children_first;
 		while (node != nullptr) {
-			CharString buf(L"i");
-			if (!(dynamic_cast<HtmlElement*>(node) != nullptr && dynamic_cast<HtmlElement*>(node)->isName(&buf))) {
+			CharString i(L"i");
+			CharString sty(L"style");
+			if (!((dynamic_cast<HtmlElement*>(node) != nullptr && dynamic_cast<HtmlElement*>(node)->isName(&i))
+				||(dynamic_cast<HtmlElement*>(node) != nullptr && dynamic_cast<HtmlElement*>(node)->isName(&sty))
+				)
+				) {
 				node->deepCopyOfText(result);
 			}
 			node = node->next_sibling;

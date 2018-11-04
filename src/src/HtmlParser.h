@@ -81,6 +81,18 @@ private:
 
 			delete blank;
 		}
+		static const CharString name_textarea(L"textarea");
+		if (node->isName(&name_textarea)) {
+			CharString* blank = new CharString(L"");
+			node->deepCopyOfText(blank);//在第二个
+
+			if (endText_ == nullptr)
+				endText_ = new CharString(L"");
+
+			endText_->concat(blank);
+
+			delete blank;
+		}
 	}
 
 	void extractInfoFromMeta(HtmlElement * node) {

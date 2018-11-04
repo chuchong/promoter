@@ -7,5 +7,9 @@
 *.filters
 *.user
 *.obj
+*.info
+*.txt
 /src/src/Debug
 !/src/dictionary/
+*.txt
+*.info
