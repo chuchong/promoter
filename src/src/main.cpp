@@ -137,6 +137,7 @@ std::wstring s2ws(const string& s)
 
 	return result;
 }
+
 void getFiles(string path, vector<string>& files)
 {
 	//нд╪Ч╬Д╠З  

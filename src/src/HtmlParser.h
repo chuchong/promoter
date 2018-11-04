@@ -43,32 +43,78 @@ private:
 			return;
 		}
 		static const CharString type_div(L"div");
+		//-------------------------------------by attribute id
 		static const CharString attribute_name_id (L"id");
 		static const CharString attribute_value_endText(L"endText");
 		if (node->haveAttribute(&attribute_name_id, &attribute_value_endText)) {
-			CharString* blank = new CharString(L"");	
+			CharString* blank = new CharString(L"");
 			node->deepCopyOfText(blank);
 
 			if (endText_ == nullptr)
 				endText_ = new CharString(L"");
-			
+
 			endText_->concat(blank);
 
 			delete blank;
 		}
+		static const CharString attribute_value_ne_article_source(L"ne_article_source");
+		if (node->haveAttribute(&attribute_name_id, &attribute_value_ne_article_source)) {
+			CharString* blank = new CharString(L"");
+			node->deepCopyOfText(blank);//在第二个
+
+			if (source_ == nullptr) {
+				source_ = new CharString(L"");
+				source_->concat(blank);
+			}
+			delete blank;
+		}
+		//---------------------------by attribute class
 		static const CharString attribute_name_class(L"class");
 		static const CharString attribute_value_source(L"post_time_source");
-		if (node->haveAttribute(&attribute_name_class, &attribute_value_source)) {
+		static const CharString attribute_value_time2(L"ep-time-soure cDGray");
+		if (node->haveAttribute(&attribute_name_class, &attribute_value_source)
+			|| node->haveAttribute(&attribute_name_class, &attribute_value_time2)) {
 			CharString* blank = new CharString(L"");
-			node->children_first->next_sibling->deepCopyOfText(blank);//在第二个
+			if(node->children_first != nullptr)
+				node->children_first->deepCopyOfText(blank);//在第二个
 
-			if (source_ == nullptr)
-				source_ = new CharString(L"");
+			//if (source_ == nullptr) {
+			//	source_ = new CharString(L"");
+			//	source_->concat(blank);
+			//} // source 在第二个
+			if (published_time_ == nullptr) {
+				published_time_ = new CharString(L"");
+				published_time_->concat(blank);
+			}
 
-			source_->concat(blank);
+			while (published_time_->charAt(published_time_->size() - 1) > L'9' ||
+				published_time_->charAt(published_time_->size() - 1) < L'0')
+				published_time_->pop_back();//将屁股上的"来源"吐了
 
 			delete blank;
 		}
+
+		static const CharString attribute_value_time3(L"ptime");
+		if (node->haveAttribute(&attribute_name_class, &attribute_value_time3)) {
+			CharString* blank = new CharString(L"");
+			node->deepCopyOfText(blank);
+			int i = 0;
+			while (i < blank->size() &&
+				(blank->charAt(i) > L'9' || blank->charAt(i) < L'0')
+				)
+				i++;
+			
+			CharString * sub = blank->subString(i,blank->size());
+
+			if (published_time_ == nullptr) {
+				published_time_ = new CharString(L"");
+				published_time_->concat(sub);
+			}
+				//将屁股上的"来源"吐了
+			delete sub;
+			delete blank;
+		}
+		//--------------------------by h1
 		static const CharString type_title(L"h1");
 		if (node->isName(&type_title)) {
 			CharString* blank = new CharString(L"");
@@ -81,6 +127,7 @@ private:
 
 			delete blank;
 		}
+		//------------------------by textarea
 		static const CharString name_textarea(L"textarea");
 		if (node->isName(&name_textarea)) {
 			CharString* blank = new CharString(L"");
@@ -93,6 +140,7 @@ private:
 
 			delete blank;
 		}
+
 	}
 
 	void extractInfoFromMeta(HtmlElement * node) {
@@ -117,9 +165,9 @@ private:
 		//if (title_ == nullptr && node->haveAttribute(&prop, &pro_ttl)) {
 		//	title_ = new CharString(node->copyValueOfAttriName(&cont));
 		//}
-		if (published_time_ == nullptr && node->haveAttribute(&prop, &pro_pub)) {
-			published_time_ = new CharString(node->copyValueOfAttriName(&cont));
-		}
+		//if (published_time_ == nullptr && node->haveAttribute(&prop, &pro_pub)) {
+		//	published_time_ = new CharString(node->copyValueOfAttriName(&cont));
+		//}
 
 	}
 
@@ -300,12 +348,17 @@ public:
 		if(title_ != nullptr)
 			os << (*title_) ;
 		os << std::endl;
+		
 		if (source_ != nullptr)
 			os << (*source_);
+		else
+			os << L"网易没告诉我...";
 		os << std::endl;
+		
 		if (published_time_ != nullptr)
 			os << (*published_time_);
 		os << std::endl;
+
 		if (endText_ != nullptr)
 			os << (*endText_);
 		os << std::endl;

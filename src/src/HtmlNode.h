@@ -20,7 +20,7 @@
 
 #define pStack Stack<HtmlElement*>*
 
-
+//属性
 class HtmlAttribute {
 private:
 	CharString * name_ = nullptr;//存储名称
@@ -73,7 +73,9 @@ public:
 						index++;
 					}
 					else {
-						while (str->charAt(index) != L' ' && str->charAt(index) != L'/' && str->charAt(index) != L'>') {
+						while (str->charAt(index) != L' ' &&  str->charAt(index) != L'>') {
+							if ((str->charAt(index) == L'/' && index + 1 < str->size() && str->charAt(index + 1) == L'>'))
+								break;// />该停下了 w因为 有href=http://www.people.com.cn 这种智障写法
 							index++;
 						}
 						if (value_ == nullptr)
