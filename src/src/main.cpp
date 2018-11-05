@@ -1,11 +1,11 @@
+//由于使用了mbstowcs,需要在预处理器中添加_CRT_SECURE_NO_WARNINGS;
+//需要支持c++11
 //注意我将dict中的bom头删掉了
-//在读取其他人文件时,还需要添加bom头
-//dict中是按照编码从小到大排的
-//一19968 龟40863
+//在读取其他人文件时,还需要删掉dict的bom头
 #include "Stack.h"
 #include "CharString.h"
 #include "CharStringLink.h"
-#include "HashDict.h"
+#include "Dict.h"
 #include "Searcher.h"
 #include "HtmlParser.h"
 #include "Devider.h"
@@ -16,7 +16,7 @@
 #include <locale>
 #include <codecvt>
 #include <io.h>
-#include <vector>//只用于提取同级目录下所有文件
+#include <vector>//只用在main中提取同级目录下所有文件
 #include <crtdbg.h>
 
 
@@ -24,103 +24,9 @@
 #define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #endif
 
-void EnableMemLeakCheck()
-{
-	int tmpFlag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
-	tmpFlag |= _CRTDBG_LEAK_CHECK_DF;
-	_CrtSetDbgFlag(tmpFlag);
-}
-
 using namespace std;
-void testStack() {
-	Stack<char> c;
-	for (int i = 1; i < 100; i ++)
-		c.push('a');
-	while (!c.empty()) {
-		c.top();
-		c.pop();
-	}
-}
-
-void testString() {
-	wstring aaa(L"AAA");
-	CharString a(aaa);
-	CharString str(L"1123333333333333333333333333333333333333");
-	CharString str_1(L"13");
-	str_1[1] = L'2';
-	str_1.concat(L"33");
-	str_1.resize(3);
-	CharString * s = str.subString(0, 5);
-
-
-
-	cout << s->indexOf(str_1, 0);
-}
-
-void testDict() {
-	Searcher searcher;
-	searcher.parse("../dictionary/词库.dic");
-	CharString s(L"一心一意");
-	CharString s2(L"红魔馆");
-	cout << searcher.haveStr(&s);
-	cout << searcher.haveStr(&s2);
-
-}
-
-void testParser() {
-	//HtmlParser parser;
-	//parser.parse(L"../input/test.html");
-	//parser.output();
-	Devider d;
-	Searcher s;
-	s.parse("../dictionary/词库.dic");
-
-	for (int i = 21; i <= 25; i++) {
-		CharStringLink l;
-		HtmlParser parser;
-		cout << "---------------------------" << i <<"---------------------" << endl;
-		CharString a(L"./output/1");
-		parser.setDoc(&a);
-		parser.parse(L"../input/" + to_wstring(i) + L".html");
-		parser.output();
-		d.devide(parser.getText(), &s, &l);
-		l.output(parser.getDoc());
-		cout << "---------------------------" << i << "---------------------" << endl;
-	}
-	return;
-}
-
-void testMemory() {
-	//CharString
-	while (1) {
-		CharString* a = new CharString(L"aaaaaaaaaaaa");
-		a->concat(L"aaaa");
-		delete a;
-	}
-}
-
-void testDevider() {
-	Devider d;
-	CharString test_word(L"做外套来穿的话，里面的内搭一定要修身，不然看起来会很显胖");
-	Searcher s;
-	s.parse("../dictionary/词库.dic");
-	CharStringLink l;
-	HtmlParser p;
-	p.parse(L"../input/20.html");
-	p.getText();
-	d.devide(p.getText(), &s, &l);
-	l.print();
-	return;
-}
-
-void testINI() {
-	Searcher s;
-	s.parse("../dictionary/词库.dic");
-
-	return;
-}
-
-
+//string转为wstring
+//引用 https://www.cnblogs.com/changxiaoxiao/archive/2013/05/16/3081894.html
 std::wstring s2ws(const string& s)
 {
 	setlocale(LC_ALL, "chs");
@@ -137,7 +43,8 @@ std::wstring s2ws(const string& s)
 
 	return result;
 }
-
+//读取同级目录下所有文件
+//引用 http://www.cnblogs.com/xzh1993/p/5048322.html
 void getFiles(string path, vector<string>& files)
 {
 	//文件句柄  
@@ -164,7 +71,7 @@ void getFiles(string path, vector<string>& files)
 		_findclose(hFile);
 	}
 }
-
+//工作
 void work() {
 	std::vector<string> files;
 
@@ -174,7 +81,7 @@ void work() {
 
 	Devider d;
 	Searcher s;
-	s.parse("../dictionary/词库.dic");
+	s.initDictionary("./词库.dic");
 
 	for (string file : files) {
 		std::wstring  wide = s2ws(file);
@@ -205,15 +112,6 @@ void work() {
 
 }
 int main() {
-	//_CrtSetBreakAlloc(1134017);
-	//_CrtSetBreakAlloc(1134014);
-	//testStack();
-	//testString();
-	//testDict();
-	//testParser();
-	//testMemory();
-	//EnableMemLeakCheck();
-	//testDevider();
 	work();
 	return 0;
 }

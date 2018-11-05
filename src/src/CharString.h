@@ -3,8 +3,7 @@
 #include <assert.h>
 #include <iostream>
 #include <locale>
-//String字符串类,暂时用数组存储
-//推荐将其当做类似JAVA C#中的引用变量来用(即指针)
+//String字符串类,用wchar_t数组存储宽字符串
 class CharString
 {
 	int maxSize_;
