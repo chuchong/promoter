@@ -35,6 +35,7 @@ private:
 	CharString * endText_ = nullptr;
 
 	CharString * doc_name_ = nullptr;
+	HtmlNode * doc_head = nullptr;
 private:
 	//提取信息
 	void extractInfo(HtmlElement * node);
@@ -68,6 +69,9 @@ public:
 	void output();
 	void print();
 
+	HtmlNode * getDocNode() {
+		return doc_head;
+	}
 	private:
 		//delete自己的一个成员变量
 		void deleteProperty(CharString *s) {

@@ -9,6 +9,7 @@
 #include "Searcher.h"
 #include "HtmlParser.h"
 #include "Devider.h"
+#include "HtmlFilter.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -105,12 +106,20 @@ void work() {
 		std::wcout << "---------------------------" << str << "---------------------" << endl;
 		parser.parse(wide);
 		parser.output();
+
+		//HtmlFilter fil;
+		//fil.searchTree(parser.getDocNode());
 		d.devide(parser.getText(), &s, &l);
 		l.output(parser.getDoc());
 		std::wcout << "---------------------------" <<str<< "---------------------" << endl;
 	}
 
 }
+
+void testFilter() {
+
+}
+
 int main() {
 	work();
 	return 0;

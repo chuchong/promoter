@@ -9,6 +9,7 @@
 #include <assert.h>
 #include "Stack.h"
 #include "CharString.h"
+
 #include <iostream>
 //宏定义的一些变量,用作返回值的信息传递
 #define HtmlNodeEnd 0
@@ -22,14 +23,14 @@
 
 //这个最后没用上...
 #define pStack Stack<HtmlElement*>*
-
+class HtmlFilter;
 //属性,即是指<>中间部分的信息,不是节点
 class HtmlAttribute {
 private:
 	CharString * name_ = nullptr;//存储名称
 	CharString * value_ = nullptr;//存储值
 public:
-
+	friend class HtmlFilter;
 	int parseDeep(CharString * str, int& index);
 
 	HtmlAttribute *prior_ = nullptr;
@@ -51,11 +52,13 @@ public:
 	}
 };
 //html 节点类指定, 用以产生语法树
+
 class HtmlNode {
 public:
 	HtmlNode *children_first = nullptr;
 	HtmlNode *children_last = nullptr;
 	HtmlNode *next_sibling = nullptr;
+	friend class HtmlFilter;
 public:
 	virtual void deepCopyOfText(CharString * result) = 0;
 	virtual void clearSons() {
@@ -89,7 +92,7 @@ protected:
 	CharString * name_ = nullptr;//存储自身名字
 	//CharString * text_ = nullptr;//存储所有文字
 								//TODO:如果要生成html对应语法树的话,需要将text部分作为一个单独的Node子类型
-
+	friend class HtmlFilter;
 	bool hasLeft = 0;//指示是否已经读取完了左半部分
 public:
 	virtual bool isMeta() {

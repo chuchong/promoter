@@ -138,7 +138,7 @@ void CharString::operator=(const CharString & str)
 		charData_[i] = str[i];
 }
 
-void CharString::operator=(const std::string & str)
+void CharString::operator=(const std::wstring & str)
 {
 	size_ = str.size();
 	maxSize_ = size_;

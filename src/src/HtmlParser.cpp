@@ -286,13 +286,15 @@ void HtmlParser::parse(std::wstring url) {
 
 	stack->pop();
 	//assert(stack->empty());
-	delete doc;
+	doc_head = doc;
 	delete stack;
 
 	return;
 }
 
 HtmlParser::~HtmlParser() {
+	delete doc_head;
+
 	deleteProperty(doc_name_);
 	deleteProperty(keywords_);
 	deleteProperty(title_);
